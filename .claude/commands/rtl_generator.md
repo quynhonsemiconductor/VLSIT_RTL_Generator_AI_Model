@@ -1,324 +1,126 @@
-# Phase 3a · RTL Generator — /rtl_generator
+# Phase 3a · RTL Generator — /rtl_generator   (QSoC, branch `qsoc`)
 
-**Mục tiêu:** Sinh 18 module SystemVerilog-2012 cho `rv32im_core`, tag REQ-ID vào từng block,
-lint từng module ngay sau khi sinh, rồi chạy synthesis gate với GF180MCU.
+**Goal:** generate the SystemVerilog modules of one QSoC block from the approved
+requirements and configuration, tag REQ-IDs, lint each module as it is written, and
+hand the result to the QSoC repository's own checks.
 
-**Không làm trong command này:** sinh SVA (dùng `/sva_generator`), sinh testbench, chạy simulation.
+**Not in this command:** SVA (`/sva_generator`), testbench, simulation.
 
----
-
-## Quy tắc bất di bất dịch
-
-1. Sinh xong một module → lint ngay → lint pass → mới sang module tiếp theo.
-2. Synth fail → phân tích lỗi, sửa RTL, chạy lại. Không báo "done" khi synth chưa pass.
-3. Mọi file RTL phải có `` `default_nettype none `` ở dòng đầu và `` `default_nettype wire `` ở dòng cuối.
-4. Không tự quyết định logic không có trong spec. Nếu spec mơ hồ → dừng, hỏi người dùng.
-5. Gate 3 mở sau `/sva_generator`, không phải ở đây.
+This replaces the upstream RV32IM version: the module list, spec sections and tools
+are read from the artifacts, not hardcoded.
 
 ---
 
-## Bước 1 — Pre-flight
+## Fixed rules
 
-Thực hiện theo thứ tự, dừng ngay nếu bất kỳ bước nào fail:
+1. Write one module, lint it, and only move on when it is clean.
+2. Implement only what the spec says. If the spec is ambiguous: stop and ask.
+3. Follow `rtl_rule.md` (QSoC naming, `qnsc_pkg`, coding rules) throughout.
+4. Shared numbers come from `qnsc_pkg` (`vlsi_deep_training/design/top/rtl/qnsc_pkg.sv`),
+   never typed.
+5. Gate 3 opens after `/sva_generator`, not here.
 
-1. Đọc `schemas/final_config.json` → trích toàn bộ `parameters` (values đã xác nhận ở Gate 2).
-   - Nếu `gate_2_approved != true` → dừng: _"Gate 2 chưa ký. Chạy `/config_ui` trước."_
-2. Đọc `schemas/structured_spec.json` → trích danh sách `requirements` (REQ-IDs và text).
-   - Nếu không tồn tại → dùng feature IDs (F01–F19) làm placeholder, ghi nhận warning.
-3. Đọc `spec_parser.md` toàn bộ — đây là nguồn spec chính cho mọi module.
-4. Đọc `rtl_rule.md` — enforce trong suốt quá trình sinh.
-5. Tạo `src/rtl/` nếu chưa tồn tại.
-6. Kiểm tra `module load oss-cad-suite` khả dụng:
-   ```bash
-   module load oss-cad-suite && verilator --version
-   ```
-   Nếu fail → dừng: _"oss-cad-suite không load được. Kiểm tra môi trường module."_
+## Step 1 — Pre-flight (stop on the first failure)
 
-Tóm tắt pre-flight trước khi bắt đầu sinh:
+1. `schemas/final_config.json`: `gate_2_approved` must be `true`; read `parameters`.
+2. `schemas/structured_spec.json`: `gate_1_approved` must be `true`; read the
+   requirements and their `rtl_modules` (the module list and what each implements).
+3. The spec file named in `structured_spec.json` (`source_spec`): the section each
+   requirement cites.
+4. `rtl_rule.md`.
+5. `QSOC=../vlsi_deep_training` exists and has `design/top/rtl/qnsc_pkg.sv`.
+6. `verilator --version` works (Homebrew, apt or oss-cad-suite; no `module load`
+   needed).
+
+Print:
 ```
-Pre-flight OK:
-  Gate 2: approved
-  Parameters: 15 loaded
-  REQ-IDs: N loaded (hoặc WARNING: dùng feature IDs)
-  Lint tool: Verilator X.XXX
-  Output: src/rtl/
+Pre-flight OK: Gate 1/2 approved · N requirements · M modules · Verilator X · qnsc_pkg found
 ```
 
----
+## Step 2 — Generate each module, leaves first
 
-## Bước 2 — Sinh module theo thứ tự compile
+For each module in `rtl_modules`, in dependency order (a module after the ones it
+instantiates):
 
-Sinh 18 module theo đúng thứ tự dưới đây. Với **mỗi module**:
+**2a.** Read the spec sections of the requirements mapped to it.
 
-### Quy trình per-module
+**2b.** Write `src/rtl/<module>.sv`:
 
-**2a. Đọc spec section tương ứng** trong `spec_parser.md`:
-
-| Module | Spec section |
-|---|---|
-| `rv32im_pkg` | §4.2 (enum) + §4.3 (struct typedef) |
-| `rv32im_alu` | §11 |
-| `rv32im_branch_unit` | §12 |
-| `rv32im_imm_gen` | §8 |
-| `rv32im_decoder` | §7 |
-| `rv32im_lsu` | §15 |
-| `rv32im_regfile` | §9 |
-| `rv32im_mult` | §13.4 |
-| `rv32im_div` | §13.5 |
-| `rv32im_muldiv` | §13 |
-| `rv32im_hazard_ctrl` | §18 |
-| `rv32im_if_stage` | §5 |
-| `rv32im_id_stage` | §6 |
-| `rv32im_ex_stage` | §10 |
-| `rv32im_csr_file` | §16 |
-| `rv32im_trap_ctrl` | §17 |
-| `rv32im_mem_stage` | §14 |
-| `rv32im_core` | §3 + §4.1 |
-
-**2b. Sinh file SystemVerilog** vào `src/rtl/<module_name>.sv`.
-
-Template bắt buộc cho mọi file:
 ```systemverilog
-`default_nettype none
 //==============================================================================
-// Module      : <module_name>
-// Description : <mô tả 1 dòng từ spec>
-// Parent      : <parent module>
-// Spec ref    : spec_parser.md §<số>
-// REQ-IDs     : REQ-xxx, REQ-yyy  (hoặc F01, F02 nếu chưa có structured_spec)
+// Module      : <module>
+// Description : <one line from the spec>
+// Spec ref    : <QNSC_<BLOCK>_MAS.md> §<n>
+// REQ-IDs     : REQ-xxx, REQ-yyy
 //==============================================================================
-module <module_name>
-  import rv32im_pkg::*;
+module <module>
+  import qnsc_pkg::*;
 #(
-  // PR_* parameters theo spec §2.2 — chỉ list những cái module này dùng
+  // P_* parameters from final_config.json, only those this module uses
 ) (
-  // ---- Clock & Reset ----
-  // ---- <nhóm port> ---- // REQ-xxx
-  ...
+  // clock and reset (only if the module has state)
+  // ---- <port group> ---- // REQ-xxx
 );
-  // localparam LP_*
-  // khai báo reg_* rồi w_*
-  // always_comb (với default assignment đầu tiên)
-  // always_ff
-  // instance submodule
-  `ifndef SYNTHESIS
-  // assertions (placeholder — sẽ được fill bởi /sva_generator)
-  `endif
+  // localparam C_*, r_* then w_* declarations
+  // assign / always_comb (defaults first) // REQ-xxx
+  // always_ff                              // REQ-xxx
+  // instances (named connections)
+`ifndef SYNTHESIS
+  // assertions: placeholders, filled by /sva_generator
+`endif
 endmodule
-`default_nettype wire
 ```
 
-**Quy tắc tagging REQ-ID trong RTL:**
-- Header comment: `// REQ-IDs: REQ-xxx, REQ-yyy`
-- Cuối mỗi `always_comb` / `always_ff` block liên quan đến một requirement: `// REQ-xxx`
-- Port group: `// ---- <tên nhóm> ---- // REQ-xxx` nếu port trực tiếp implement requirement đó
+Tag each port group and each logic block with the REQ-IDs it implements.
 
-**Parameter substitution:** Lấy giá trị từ `final_config.json`. Ví dụ nếu `PR_M_EXT_EN = 0` thì trong `rv32im_decoder`, nhánh RV32M decode ra `o_illegal = 1`.
-
-**2c. Chạy lint ngay sau khi sinh:**
+**2c.** Lint it:
 ```bash
-module load oss-cad-suite
-verilator --lint-only --sv -Wall \
-  +incdir+src/rtl \
-  src/rtl/rv32im_pkg.sv \
-  src/rtl/<module_name>.sv \
-  2>&1
+verilator --lint-only -Wall -Wno-fatal "$QSOC/design/top/rtl/qnsc_pkg.sv" \
+  src/rtl/<module>.sv [modules it instantiates] --top-module <module>
 ```
-_(Với pkg cần include trước. Nếu module phụ thuộc module khác đã sinh, add vào list.)_
+Clean = no warning from `src/rtl/`. Fix, do not waive: `LATCH`, `MULTIDRIVEN`,
+`WIDTH*`, `UNUSED*` (re-read the spec), `UNOPTFLAT`. `UNUSEDPARAM` inside `qnsc_pkg`
+is expected (a block uses few contract constants) and is waived by the QSoC repo.
 
-- **Lint pass (0 warning/error)** → thông báo `✓ <module_name> lint OK` → tiếp tục module tiếp.
-- **Lint fail** → hiển thị lỗi, phân tích nguyên nhân, sửa file, lint lại. Không sang module tiếp cho đến khi pass.
+## Step 3 — Filelist and whole-block lint
 
-**Loại warning phải fix (không dùng `-Wno-` để suppress):**
-- `UNOPTFLAT` — latch hoặc combinational loop
-- `MULTIDRIVEN` — multi-driven net
-- `WIDTH` — width mismatch
-- `UNUSED` — signal khai báo nhưng không dùng (gợi ý xem lại spec)
-- `LATCH` — latch không chủ ý
+`src/rtl/filelist.f`: `qnsc_pkg.sv` first, then the modules leaves first. Lint the
+top module with all of them.
 
-### Thứ tự 18 module
+## Step 4 — QSoC repository gate (replaces the GF180 synthesis gate)
 
-```
-[1/18]  rv32im_pkg          → src/rtl/rv32im_pkg.sv
-[2/18]  rv32im_alu          → src/rtl/rv32im_alu.sv
-[3/18]  rv32im_branch_unit  → src/rtl/rv32im_branch_unit.sv
-[4/18]  rv32im_imm_gen      → src/rtl/rv32im_imm_gen.sv
-[5/18]  rv32im_decoder      → src/rtl/rv32im_decoder.sv
-[6/18]  rv32im_lsu          → src/rtl/rv32im_lsu.sv
-[7/18]  rv32im_regfile      → src/rtl/rv32im_regfile.sv
-[8/18]  rv32im_mult         → src/rtl/rv32im_mult.sv
-[9/18]  rv32im_div          → src/rtl/rv32im_div.sv
-[10/18] rv32im_muldiv       → src/rtl/rv32im_muldiv.sv
-[11/18] rv32im_hazard_ctrl  → src/rtl/rv32im_hazard_ctrl.sv
-[12/18] rv32im_if_stage     → src/rtl/rv32im_if_stage.sv
-[13/18] rv32im_id_stage     → src/rtl/rv32im_id_stage.sv
-[14/18] rv32im_ex_stage     → src/rtl/rv32im_ex_stage.sv
-[15/18] rv32im_csr_file     → src/rtl/rv32im_csr_file.sv
-[16/18] rv32im_trap_ctrl    → src/rtl/rv32im_trap_ctrl.sv
-[17/18] rv32im_mem_stage    → src/rtl/rv32im_mem_stage.sv
-[18/18] rv32im_core         → src/rtl/rv32im_core.sv
-```
-
----
-
-## Bước 3 — Sinh filelist.f
-
-Sau khi tất cả 18 module đã sinh và lint sạch, tạo `src/rtl/filelist.f`:
-
-```
-src/rtl/rv32im_pkg.sv
-src/rtl/rv32im_alu.sv
-src/rtl/rv32im_branch_unit.sv
-src/rtl/rv32im_imm_gen.sv
-src/rtl/rv32im_decoder.sv
-src/rtl/rv32im_lsu.sv
-src/rtl/rv32im_regfile.sv
-src/rtl/rv32im_mult.sv
-src/rtl/rv32im_div.sv
-src/rtl/rv32im_muldiv.sv
-src/rtl/rv32im_hazard_ctrl.sv
-src/rtl/rv32im_if_stage.sv
-src/rtl/rv32im_id_stage.sv
-src/rtl/rv32im_ex_stage.sv
-src/rtl/rv32im_csr_file.sv
-src/rtl/rv32im_trap_ctrl.sv
-src/rtl/rv32im_mem_stage.sv
-src/rtl/rv32im_core.sv
-```
-
-Chạy lint full design một lần nữa để verify không có cross-module issue:
-```bash
-module load oss-cad-suite
-verilator --lint-only --sv -Wall --top-module rv32im_core -f src/rtl/filelist.f 2>&1
-```
-
----
-
-## Bước 4 — Synthesis Gate (Gate 3a)
-
-### 4a. Chuẩn bị Yosys synthesis script
-
-Tạo `src/rtl/synth_gf180_tt.ys`:
-```tcl
-# Synthesis script — GF180MCU TT 25C 1.8V
-set GF180_TT "/tools/PDK/GF180/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/liberty/gf180mcu_fd_sc_mcu7t5v0__tt_025C_1v80.lib"
-
-read_verilog -sv -f src/rtl/filelist.f
-hierarchy -check -top rv32im_core
-proc
-opt -full
-memory
-opt -full
-techmap
-opt -fast
-dfflibmap -liberty $GF180_TT
-abc -liberty $GF180_TT -D 5000
-opt_clean -purge
-stat -liberty $GF180_TT
-write_json src/rtl/synth_gf180_tt.json
-```
-
-Tạo `src/rtl/synth_gf180_ss.ys` (SS corner — worst case):
-```tcl
-set GF180_SS "/tools/PDK/GF180/globalfoundries-pdk-libs-gf180mcu_fd_sc_mcu7t5v0/liberty/gf180mcu_fd_sc_mcu7t5v0__ss_125C_1v62.lib"
-
-read_verilog -sv -f src/rtl/filelist.f
-hierarchy -check -top rv32im_core
-proc
-opt -full
-memory
-opt -full
-techmap
-opt -fast
-dfflibmap -liberty $GF180_SS
-abc -liberty $GF180_SS -D 5000
-opt_clean -purge
-stat -liberty $GF180_SS
-write_json src/rtl/synth_gf180_ss.json
-```
-
-### 4b. Chạy synthesis
+Copy the modules into `$QSOC/design/<block>/rtl/`, list them in
+`$QSOC/design/<block>/<block>.f` (`../top/rtl/qnsc_pkg.sv` first; paths relative to
+the filelist), and run on a branch there:
 
 ```bash
-module load oss-cad-suite
-
-echo "=== Synthesis TT corner ==="
-yosys -l src/rtl/synth_tt.log src/rtl/synth_gf180_tt.ys
-
-echo "=== Synthesis SS corner ==="
-yosys -l src/rtl/synth_ss.log src/rtl/synth_gf180_ss.ys
+make -C "$QSOC" check
 ```
 
-### 4c. Kiểm tra kết quả
+Pass = clean. Synthesis is a later sign-off stage in QSoC (`make syn BLOCK=<block>`,
+Yosys + slang); run it only if the tools are installed, and record `not run` otherwise.
 
-Kết quả **PASS** khi:
-- Không có `ERROR:` trong log
-- `hierarchy -check` không báo missing module
-- `stat` xuất ra số cell count > 0
+Write `schemas/synth_report.json` with `"status": "not_run"` or the Yosys result, and
+`"qsoc_check": "pass"`.
 
-Kết quả **FAIL** khi:
-- Có `ERROR:` → phân tích: thường là construct không synthesizable (`initial`, `#delay`, `$display` trong RTL)
-- Fix ngay trong file RTL tương ứng, lint lại module đó, chạy lại toàn bộ synth
-
-### 4d. Ghi synth_report.json
-
-Sau khi cả hai corner pass, trích số liệu từ log và ghi `schemas/synth_report.json`:
-
-```json
-{
-  "tool": "Yosys 0.58",
-  "pdk": "GF180MCU",
-  "top_module": "rv32im_core",
-  "corners": {
-    "tt_025C_1v80": {
-      "status": "pass",
-      "cell_count": <trích từ log>,
-      "area_estimate_um2": null,
-      "log": "src/rtl/synth_tt.log"
-    },
-    "ss_125C_1v62": {
-      "status": "pass",
-      "cell_count": <trích từ log>,
-      "area_estimate_um2": null,
-      "log": "src/rtl/synth_ss.log"
-    }
-  },
-  "req_ids_tagged": <đếm số REQ-ID comments trong src/rtl/>,
-  "generated_at": "<timestamp>"
-}
-```
-
----
-
-## Bước 5 — Báo cáo tổng kết
+## Step 5 — Report
 
 ```
-╔══ RTL GENERATOR REPORT ══════════════════════════════╗
-║  Modules sinh: 18/18                                ║
-║  Lint status:  ✓ 18/18 pass (0 warning)             ║
-║  Synth TT:     ✓ pass — XXX cells                   ║
-║  Synth SS:     ✓ pass — XXX cells                   ║
-║  REQ-IDs tagged: N tags trong 18 files              ║
-╠══ Files tạo ra ══════════════════════════════════════╣
-║  src/rtl/rv32im_pkg.sv  ... (18 files)              ║
-║  src/rtl/filelist.f                                 ║
-║  src/rtl/synth_gf180_tt.ys                          ║
-║  src/rtl/synth_gf180_ss.ys                          ║
-║  schemas/synth_report.json                          ║
-╠══ Bước tiếp theo ════════════════════════════════════╣
-║  Chạy /sva_generator để sinh SVA và mở Gate 3       ║
-╚══════════════════════════════════════════════════════╝
+╔══ RTL GENERATOR REPORT (QSoC) ═══════════════════════╗
+║  Modules: M/M · lint clean                            ║
+║  QSoC make check: pass                                ║
+║  REQ-IDs tagged: N                                    ║
+║  Files: src/rtl/*.sv, src/rtl/filelist.f              ║
+║  Next: /sva_generator (Gate 3), or a PR in QSoC       ║
+╚═══════════════════════════════════════════════════════╝
 ```
 
----
+## Errors
 
-## Xử lý lỗi
-
-| Tình huống | Hành động |
+| Situation | Action |
 |---|---|
-| `final_config.json` không tồn tại | Dừng, yêu cầu chạy `/config_ui` |
-| Gate 2 chưa ký | Dừng, yêu cầu ký Gate 2 |
-| Spec section không rõ ràng | Dừng, hỏi người dùng — không tự đoán |
-| Lint warning `UNUSED` | Xem lại spec, nếu signal thực sự không dùng thì xoá, không dùng `-Wno-UNUSED` |
-| Synth: missing cell từ GF180 | Kiểm tra construct có synthesizable không (`initial`, `$`-tasks, v.v.) |
-| `src/rtl/<module>.sv` đã tồn tại | Hỏi "Ghi đè?" trước khi overwrite |
+| Gate 1 or Gate 2 not approved | Stop; run `/spec_parser` or `/config_ui` |
+| Spec unclear | Stop and ask; never guess |
+| A shared number is needed but not in `qnsc_pkg` | Stop: it belongs in `util/qsoc_contract.yml` first (a QSoC PR) |
+| `make check` fails in QSoC | Fix the generated RTL here, copy again, re-run |
+| `src/rtl/<module>.sv` exists | Ask before overwriting |
