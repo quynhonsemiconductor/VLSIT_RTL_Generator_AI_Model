@@ -1,0 +1,11 @@
+{
+  "metadata": {
+    "ip_name": "m_qnsc_intmap",
+    "phase": 2,
+    "gate_status": "approved",
+    "approved_at": "2026-09-26T20:48:10+07:00"
+  },
+  "parameters": {},
+  "notes": "INTMAP has no parameters (MAS \u00a78); line indices and widths come from qnsc_pkg. Gate 2 self-approved per /autoflow rule 3 (no parameter to choose).",
+  "gate_2_approved": true
+}
