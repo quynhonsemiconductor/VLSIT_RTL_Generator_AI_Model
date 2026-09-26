@@ -1,0 +1,16 @@
+```
+╔══ GATE 1 · SPEC REVIEW SUMMARY ════════════════════╗
+║  Total requirements:      21                      ║
+║    Functional:            14                      ║
+║    Interface:              3                      ║
+║    Timing:                 1                      ║
+║    Constraint:             3                      ║
+║  Ambiguity resolved:       3 / 3                  ║
+║  needs_human_decision:     0                      ║
+║  Parameters mapped:        0 (block has none, §8) ║
+║  RTL modules mapped:       1 (m_qnsc_intmap)      ║
+║                          + design/top (REQ-017)   ║
+╚════════════════════════════════════════════════════╝
+```
+
+**Xác nhận spec đủ rõ và mở Gate 1? (yes/no)**

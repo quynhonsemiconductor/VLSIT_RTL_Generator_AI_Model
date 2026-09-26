@@ -1,0 +1,28 @@
+{
+  "ip_name": "m_qnsc_intmap",
+  "date": "2026-09-26",
+  "status": "not_run",
+  "status_reason": "yosys not found on this machine; QSoC synthesis (make syn BLOCK=intmap, Yosys + slang) is a later sign-off stage",
+  "qsoc_check": "pass",
+  "qsoc_repo": "../vlsi_deep_training",
+  "qsoc_branch": "feat/intmap-ai-flow",
+  "qsoc_files": [
+    "design/intmap/rtl/m_qnsc_intmap.sv",
+    "design/intmap/intmap.f"
+  ],
+  "qsoc_check_detail": {
+    "filelists": "clean (18 filelists)",
+    "lint": "intmap ok (Verilator -Wall through intmap.f)",
+    "naming": "clean",
+    "hardcode": "clean",
+    "pkg_check": "qnsc_pkg.sv matches util/qsoc_contract.yml",
+    "tables": "4 generated regions match the contract",
+    "wrap_check": "no emacs wrapper yet",
+    "vendor_guard": "vendor/ untouched"
+  },
+  "local_lint": {
+    "tool": "Verilator 5.052",
+    "command": "verilator --lint-only -Wall -Wno-UNUSEDPARAM -F src/rtl/filelist.f --top-module m_qnsc_intmap",
+    "result": "no warning from src/rtl/ (UNUSEDPARAM only inside qnsc_pkg, expected)"
+  }
+}

@@ -1,0 +1,58 @@
+Đã cập nhật hai requirement theo câu trả lời của bạn.
+
+- **REQ-017:** thành ghi chú cho người tích hợp `design/top`, score 0.10 ✓. Không SVA, không gắn tag trong RTL, không tính vào phạm vi `m_qnsc_intmap`.
+- **REQ-021:** thành assertion chỉ chạy trong simulation, score 0.10 ✓. Mỗi `i_int_*` phải thoả `!$isunknown`, đặt trong `` `ifndef SYNTHESIS ``. Block không có clock, nên đây phải là deferred immediate assertion (`always_comb assert final (...)`), không dùng được concurrent property.
+- **REQ-018 phải sửa theo REQ-021.** Trước đây REQ-018 nói module chỉ gồm `assign`. Bây giờ nó cho phép thêm đúng một khối `always_comb` chứa assertion, nằm trong `` `ifndef SYNTHESIS ``. Vẫn cấm `always_ff`, `always_latch`, flip-flop, latch và instance.
+
+Review mơ hồ hoàn tất: 3 resolved (017, 020, 021), 0 cần quyết định của người dùng.
+
+```
+╔══ PHASE 1 · SPEC REVIEW ══════════════════════════════════════════════╗
+║  Tổng: 21 requirements  │  Resolved: 21  │  Pending decision: 0     ║
+╠══ FUNCTIONAL (14) ═══════════════════════════════════════════════════╣
+║  REQ-001 [0.05] ✓  o_int_fast[0]  =  i_int_dma          (wire)       ║
+║  REQ-002 [0.05] ✓  o_int_fast[1]  = |i_int_spi_device   (OR 8)       ║
+║  REQ-003 [0.05] ✓  o_int_fast[2]  = |i_int_spi_host     (OR 2)       ║
+║  REQ-004 [0.05] ✓  o_int_fast[3]  =  i_int_i2c          (wire)       ║
+║  REQ-005 [0.05] ✓  o_int_fast[4]  =  i_int_uart_0       (wire)       ║
+║  REQ-006 [0.05] ✓  o_int_fast[5]  =  i_int_uart_1       (wire)       ║
+║  REQ-007 [0.05] ✓  o_int_fast[6]  = |i_int_timer_1      (OR 2)       ║
+║  REQ-008 [0.05] ✓  o_int_fast[7]  = |i_int_pwm          (OR 4)       ║
+║  REQ-009 [0.05] ✓  o_int_fast[8]  =  i_int_wdt_wakeup   (wire)       ║
+║  REQ-010 [0.05] ✓  o_int_fast[9]  = |i_int_gpio         (OR 3)       ║
+║  REQ-011 [0.05] ✓  o_int_fast[10] =  i_int_timer_0      (wire)       ║
+║  REQ-012 [0.05] ✓  o_int_nm = i_int_wdt_bark, never ORed; bark       ║
+║                    reaches no fast line                              ║
+║  REQ-013 [0.10] ✓  One group per line: no input affects another      ║
+║                    line; no prioritisation or masking in block       ║
+║  REQ-014 [0.15] ✓  Simultaneous inputs: every affected line asserted ║
+║                    (cover)                                           ║
+╠══ TIMING (1) ════════════════════════════════════════════════════════╣
+║  REQ-015 [0.10] ✓  Zero latency: outputs follow inputs combin.,      ║
+║                    no pulse latch; held input holds line (7.5)       ║
+╠══ INTERFACE (3) ═════════════════════════════════════════════════════╣
+║  REQ-016 [0.05] ✓  Exact 14 ports, 26 in bits / 12 out bits, widths  ║
+║                    + bit order per §5; no clk/rst/bus port           ║
+║  REQ-017 [0.10] ✓  Integration note (design/top): fast→irq_fast_i    ║
+║                    [10:0], nm→irq_nm_i, spare/ext/timer/sw tied 0    ║
+║  REQ-021 [0.10] ✓  Sim-only: each i_int_* !$isunknown, ifndef SYNTH  ║
+╠══ CONSTRAINT (3) ════════════════════════════════════════════════════╣
+║  REQ-018 [0.05] ✓  Combinational only: assign + sim-only assert       ║
+║                    block; no always_ff/latch, no instance            ║
+║  REQ-019 [0.05] ✓  Module m_qnsc_intmap, design/intmap, no params,   ║
+║                    1 instance in design/top, Naming Rule V1.0        ║
+║  REQ-020 [0.20] ✓  Line order = priority per table 7.2 (mcause 16+n, ║
+║                    vector mtvec+4·mcause); indices = qnsc_pkg        ║
+║                    C_INT_LINE_*, not literal (rtl_rule.md §2)        ║
+╚═══════════════════════════════════════════════════════════════════════╝
+```
+
+**Bước 6 (mapping):**
+- **Parameter:** không có (§8). `parameters` sẽ là mảng rỗng.
+- **RTL module:** REQ-001..016 và REQ-018..021 map vào `m_qnsc_intmap`. REQ-017 map vào `design/top` (nằm ngoài flow này).
+
+**SVA không dùng được clock của block**, vì block không có clock. Ghi chú này sẽ nằm trong metadata để `/sva_generator` đọc. Có hai cách:
+- Nếu SVA cần clock (các REQ có `sva_hint` là `property` hoặc `cover`): dùng clock lấy mẫu do testbench cấp.
+- Nếu không muốn phụ thuộc clock: dùng deferred immediate assertion (`assert final`).
+
+**Bạn muốn chỉnh sửa, thêm, hoặc xoá requirement nào? (REQ-ID hoặc 'none')**

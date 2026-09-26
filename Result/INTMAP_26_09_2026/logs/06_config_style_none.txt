@@ -1,0 +1,19 @@
+```
+╔══ GATE 2 · CONFIG SUMMARY ═══════════════════════════╗
+║  IP: m_qnsc_intmap   Spec rev: V2.2                  ║
+╠══ Parameters thay đổi so với default ════════════════╣
+║  Block không có parameter (§8)                       ║
+╠══ Constraints ════════════════════════════════════════╣
+║  C1 [PASS N/A]  C2 [PASS N/A]  C3 [PASS N/A]         ║
+║  C4 [PASS N/A]  C5 [PASS N/A]                        ║
+║  (parameter rv32im_core không có ở block này)        ║
+╠══ Features enabled ═══════════════════════════════════╣
+║  ✓ Mandatory: F1 F2 F3 F4 F5                         ║
+║  ✓ Optional:  —                                      ║
+║  ✗ Disabled:  —                                      ║
+╠══ Style constraints ══════════════════════════════════╣
+║  Nguồn gốc: rtl_rule.md + 0 rule bổ sung             ║
+╚══════════════════════════════════════════════════════╝
+```
+
+**Bạn xác nhận cấu hình trên và mở Gate 2? Gõ `yes` để ký, hoặc `no` để chỉnh sửa.**

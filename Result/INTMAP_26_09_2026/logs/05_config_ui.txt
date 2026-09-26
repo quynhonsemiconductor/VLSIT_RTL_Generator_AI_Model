@@ -1,0 +1,34 @@
+`/config_ui`: đọc `schemas/structured_spec.json` và `rtl_rule.md`. `schemas/final_config.json` chưa tồn tại, không có gì bị ghi đè.
+
+**Bước 1–3: parameter**
+
+`structured_spec.json` có `parameters` rỗng, vì INTMAP không có parameter nào (§8). Tôi không dùng bảng mặc định của rv32im_core (P01–P15), vì đó là IP khác. Nên không có parameter nào để đổi, và bỏ qua Bước 3.
+
+Ràng buộc C1–C5 đều nói về các parameter của rv32im_core (`PR_BOOT_ADDR`, `PR_CSR_EN`, …). Không parameter nào trong số đó có ở INTMAP. Tôi sẽ ghi `pass: true` với ghi chú "N/A — parameter absent (INTMAP has none)". Như vậy Gate 2 điều kiện (a) được thoả một cách hiển nhiên, vì không có gì để vi phạm. Nếu bạn thấy cách hiểu này không đúng thì báo tôi.
+
+`feature_matrix` sẽ ghi 5 feature trong §2 của spec, cả 5 đều bắt buộc và luôn bật, không có parameter nào điều khiển:
+
+| Feature | Nội dung | REQ |
+|---|---|---|
+| F1 | 26 source đi vào 11 fast line cộng 1 NMI | 001–011, 016 |
+| F2 | Mỗi line chỉ một nhóm source | 013 |
+| F3 | Chỉ có logic tổ hợp | 015, 018 |
+| F4 | Priority bằng line index, do core giải quyết | 020 |
+| F5 | Watchdog bark là wire | 012 |
+
+**Bước 4: style constraints**
+
+Đã đọc `rtl_rule.md`. Các rule sẽ ghi vào config:
+
+- **Naming:** theo Naming Rule V1.0: `m_qnsc_*`, port có tiền tố `i_`/`o_`, `i_int_*`/`o_int_*`, `w_*`/`r_*`, `P_`/`C_`/`S_`, index có gạch dưới (`timer_0`), dùng từ `int` chứ không dùng `irq`.
+- **Số dùng chung:** lấy từ `qnsc_pkg` (`C_INT_LINE_*`), không ghi thẳng giá trị.
+- **Cấu trúc module:** header, `import qnsc_pkg::*`, nhóm port, assertion nằm trong `` `ifndef SYNTHESIS ``.
+- **R1–R12:**
+  - R2: logic tổ hợp dùng `assign`/`always_comb`
+  - R7: chỉ dùng `logic`
+  - R9: ghi rõ độ rộng
+  - R10: module tổ hợp không có clk/rst
+- **Cấm:** `#delay`, `initial`, `casex`/`casez`, `defparam`, implicit net, latch, multi-driver, `$random`/`$display`, số dùng chung ghi thẳng giá trị.
+- **Lint gate:** `make -C $QSOC check`, gồm Verilator `-Wall`, `naming_check.py` và `hardcode_check.py`.
+
+**Bạn có muốn thêm style constraint nào ngoài `rtl_rule.md` không?** Viết bằng lời thường (ví dụ "mỗi `assign` có comment REQ-ID"), hoặc gõ `none`.

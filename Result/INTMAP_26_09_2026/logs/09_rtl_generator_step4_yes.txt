@@ -1,0 +1,34 @@
+`m_qnsc_intmap` passes all the QSoC checks. `make check` runs clean on `feat/intmap-ai-flow`, and I haven't committed anything.
+
+```
+╔══ RTL GENERATOR REPORT (QSoC) ═══════════════════════╗
+║  Modules: 1/1 · lint clean                            ║
+║  QSoC make check: pass                                ║
+║  REQ-IDs tagged: 20 (REQ-017 integration note only)   ║
+║  Files: src/rtl/m_qnsc_intmap.sv, src/rtl/filelist.f  ║
+║  Next: /sva_generator (Gate 3), or a PR in QSoC       ║
+╚═══════════════════════════════════════════════════════╝
+```
+
+**What changed in `../vlsi_deep_training`:**
+- `design/intmap/rtl/m_qnsc_intmap.sv`: new file, a copy of the module generated here.
+- `design/intmap/intmap.f`: now lists `../top/rtl/qnsc_pkg.sv` first, then `rtl/m_qnsc_intmap.sv`.
+
+**`make check` results:**
+
+| Check | Result |
+|---|---|
+| filelists | clean (18 filelists) |
+| lint | intmap ok |
+| naming | clean |
+| hardcode | clean |
+| pkg-check | `qnsc_pkg.sv` matches the contract |
+| tables | match the contract |
+| wrap-check | nothing to check (no emacs wrapper yet) |
+| vendor-guard | `vendor/` untouched |
+
+**Synthesis did not run.** Yosys isn't installed here, so `schemas/synth_report.json` records `"status": "not_run"` alongside `"qsoc_check": "pass"`.
+
+**No simulation was run.** This command doesn't include one, and unlike the previous run there was no local smoke test. Behaviour will first be exercised by the SVA and testbench phases.
+
+Next: `/sva_generator` (Gate 3 opens after it), or open a PR in QSoC from `feat/intmap-ai-flow`.

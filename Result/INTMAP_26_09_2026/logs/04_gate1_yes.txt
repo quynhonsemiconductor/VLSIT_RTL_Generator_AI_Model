@@ -1,0 +1,12 @@
+✓ Gate 1 đã ký. `schemas/structured_spec.json` ghi xong.
+
+- **Nội dung:** 21 requirement (14 functional, 3 interface, 1 timing, 3 constraint). `parameters` rỗng vì block không có parameter. `ambiguity_flags` rỗng vì không còn REQ nào score > 0.3. `gate_status` là `approved`.
+- **Chưa validate bằng máy.** Lệnh validate với `jsonschema` bị từ chối quyền nên không chạy được. Tôi chỉ kiểm tra bằng mắt: có đủ các trường bắt buộc, REQ-ID đúng dạng `^REQ-[0-9]{3,}$`, category nằm trong enum.
+- **Có thêm vài trường ngoài schema.** Mỗi REQ có thêm `rtl_modules`, `sva_hint` và `review_log` (ở REQ-017, 020, 021). REQ-017 có thêm `integration_note_only`. `metadata` có thêm `gate_1_approved`, `spec_source` và `notes`. Schema không đặt `additionalProperties: false`, nên các trường này hợp lệ.
+- **Hai điểm `/rtl_generator` cần làm theo:**
+  - REQ-018 cho phép một khối `always_comb` assertion trong `` `ifndef SYNTHESIS `` (đến từ REQ-021).
+  - REQ-020 dùng hằng `C_INT_LINE_*` từ `qnsc_pkg`, không ghi thẳng số line.
+
+Google Drive và Microsoft 365 trên claude.ai cần bạn cấp quyền trong phần connector settings trước khi dùng được. Việc này không ảnh hưởng đến phase này.
+
+Tiếp theo: `/config_ui`.

@@ -1,0 +1,36 @@
+Whole-block lint qua `filelist.f` clean. Bước 4 thao tác trên repo QSoC khác, nên tôi cần bạn đồng ý trước.
+
+**Kết quả đến giờ (Bước 1–3):**
+
+```
+Pre-flight OK: Gate 1/2 approved · 21 requirements · 1 module · Verilator 5.052 · qnsc_pkg found
+```
+
+- **Module mới:** `src/rtl/m_qnsc_intmap.sv`
+  - 11 `assign` cho `o_int_fast` (5 cổng OR, 6 wire), line index lấy từ `C_INT_LINE_*`, và 1 wire cho `o_int_nm`.
+  - Độ rộng `o_int_fast` là `C_INT_FAST_LINES_USED`, không ghi thẳng số.
+  - Không có clk, rst, flip-flop hay instance.
+  - Có một khối `always_comb` gồm 12 `assert final (!$isunknown(...))`, chỉ chạy trong simulation (trong `` `ifndef SYNTHESIS ``) (REQ-021).
+  - Gắn tag REQ-001..016 và 018..021. REQ-017 là ghi chú tích hợp nên không gắn tag.
+- **Filelist:** `src/rtl/filelist.f`, `qnsc_pkg.sv` đứng trước. Dùng với `verilator -F` (đường dẫn tính từ vị trí file `.f`).
+- **Lint:**
+
+  | Check | Kết quả |
+  |---|---|
+  | Verilator `-Wall` | không có warning nào từ `src/rtl/`, chỉ có `UNUSEDPARAM` trong `qnsc_pkg` (đã biết trước) |
+  | `naming_check.py` | clean |
+  | `hardcode_check.py` | clean |
+
+**Bước 4 sẽ làm những việc này trong `../vlsi_deep_training`:**
+
+1. Tạo branch mới, ví dụ `intmap/rtl-gen`. Lệnh git ở repo đó đang bị chặn quyền, nên bạn cần approve.
+2. Copy `m_qnsc_intmap.sv` vào `design/intmap/rtl/`.
+3. Sửa `design/intmap/intmap.f`: thêm `../top/rtl/qnsc_pkg.sv` rồi `rtl/m_qnsc_intmap.sv`.
+4. Chạy `make -C ../vlsi_deep_training check`.
+5. Ghi `schemas/synth_report.json`. Synthesis sẽ ghi `not_run`, trừ khi máy có Yosys + slang.
+
+Tôi sẽ không commit và không push nếu bạn chưa bảo.
+
+Lưu ý: README của run trước nói RTL đã merge vào QSoC qua PR #31, nhưng working copy hiện tại chỉ có `design/intmap/rtl/.gitkeep`. Có thể bạn đang ở branch cũ hơn main. Nếu vậy thì branch mới nên tạo từ `origin/main` mới nhất, và có thể đụng file đã có sẵn ở đó.
+
+**Chạy Bước 4? (yes/no). Nếu yes, tạo branch từ `origin/main` hay từ branch hiện tại?**

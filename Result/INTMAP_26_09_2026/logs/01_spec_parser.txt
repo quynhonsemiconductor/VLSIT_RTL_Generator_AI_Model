@@ -1,0 +1,50 @@
+Đã đọc `spec/intmap_spec.md`, 285 dòng. Spec có port list, block diagram và bảng line assignment, nên đúng là RTL spec. `schemas/structured_spec.json` chưa tồn tại, không có gì bị ghi đè. Có một run cũ trong `Result/INTMAP_26_09_2026/`; tôi không dùng nó, lần này trích lại từ đầu.
+
+**Bản nháp: 21 requirement**
+
+| Category | Số lượng | REQ |
+|---|---|---|
+| Functional | 14 | 001–011 (mỗi line một REQ), 012 (NMI), 013 (các line độc lập nhau), 014 (nhiều input bật cùng lúc) |
+| Timing | 1 | 015 (không trễ cycle nào, không latch) |
+| Interface | 3 | 016 (port list), 017 (nối với core ở top), 021 (X trên input) |
+| Constraint | 3 | 018 (chỉ gồm logic tổ hợp), 019 (tên module, không có parameter), 020 (thứ tự line) |
+
+Tôi không tạo REQ-ID cho các phần sau vì chúng thuộc block khác hoặc không phải yêu cầu của block này:
+- §7.4: cách xoá từng source
+- §7.5 và §11: việc của firmware và HAS owner
+- §9: các chức năng block không cung cấp
+- Open item 1 (timing và area): số liệu lấy từ lần synthesis đầu tiên
+
+**REQ-020 không phải hỏi lại.** Code mẫu ở §7.1 ghi thẳng số line, nhưng `rtl_rule.md` §2 bắt buộc dùng hằng `C_INT_LINE_*` từ `qnsc_pkg`. Tôi cho rule thắng: RTL dùng hằng, và giá trị các hằng phải khớp bảng 7.2. Score 0.2. Nếu bạn muốn theo spec thì báo tôi.
+
+---
+
+**Bước 4: hai requirement mơ hồ cần bạn trả lời**
+
+```
+⚠ REQ-017 [ambiguity: 0.35] — Lần hỏi 1/3
+Text hiện tại: "o_int_fast nối vào irq_fast_i[10:0], o_int_nm nối vào irq_nm_i;
+  irq_fast_i[14:11] = 4'b0, irq_external_i / irq_timer_i / irq_software_i = 0"
+Vấn đề: §12 check 4 và §10 yêu cầu các điều này, nhưng chúng được làm trong design/top,
+  không phải trong m_qnsc_intmap. Chưa rõ flow này có chịu trách nhiệm cho chúng không.
+Câu hỏi: Chọn một:
+  (a) Giữ lại, rtl_modules = design/top, chỉ kiểm tra trong SVA/test ở mức top
+  (b) Giữ lại dưới dạng ghi chú cho người tích hợp: không SVA, không gắn tag trong RTL
+  (c) Xoá: nằm ngoài phạm vi INTMAP
+→
+```
+
+```
+⚠ REQ-021 [ambiguity: 0.50] — Lần hỏi 1/3
+Text hiện tại: "Mỗi i_int_* phải có giá trị xác định (không X)"
+Vấn đề: §11 open item 2 vẫn còn mở. X đi xuyên qua cổng OR, còn IbexIrqX chỉ kiểm tra
+  cả bundle, nên không chỉ ra được input nào bị X.
+Câu hỏi: Chọn một:
+  (a) Thêm assertion chỉ dùng khi simulation: !$isunknown(i_int_*) cho từng input,
+      đặt trong `ifndef SYNTHESIS
+  (b) Chỉ viết trong SVA bind file, không đưa vào RTL
+  (c) Xoá: không làm, để IbexIrqX lo
+→
+```
+
+Trả lời theo dạng `017: a, 021: a`.

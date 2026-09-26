@@ -2,275 +2,265 @@
   "metadata": {
     "ip_name": "m_qnsc_intmap",
     "spec_revision": "V2.2",
+    "spec_source": "spec/intmap_spec.md",
     "phase": 1,
     "gate_status": "approved",
-    "approved_at": "2026-09-26T20:48:10+07:00"
+    "gate_1_approved": true,
+    "approved_at": "2026-09-26",
+    "notes": [
+      "INTMAP is purely combinational and has no clock or reset. Concurrent SVA (sva_hint 'property'/'cover') must sample on a testbench-supplied clock, or be written as deferred immediate assertions (assert final).",
+      "The block has no parameters (spec section 8); 'parameters' is intentionally empty.",
+      "Not converted to requirements: 7.4 per-source clearing, 7.5 and 11 firmware/HAS obligations, 9 functions provided elsewhere, 11 open item 1 (timing/area comes from first synthesis)."
+    ]
   },
-  "source_spec": "spec/intmap_spec.md",
+
   "requirements": [
     {
       "req_id": "REQ-001",
-      "text": "o_int_fast[C_INT_LINE_DMA] (line 0) = i_int_dma, a wire",
+      "text": "o_int_fast[0] is a wire from i_int_dma (line 0, mcause 16).",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 0",
+      "source_section": "§7.1, §7.2 line 0, §12 check 1",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-002",
-      "text": "o_int_fast[C_INT_LINE_SPI_DEVICE] (line 1) = OR of the 8 bits of i_int_spi_device",
+      "text": "o_int_fast[1] is the OR reduction of all 8 bits of i_int_spi_device (line 1, mcause 17); each bit alone raises the line.",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 1",
+      "source_section": "§7.1, §7.2 line 1, §12 check 2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-003",
-      "text": "o_int_fast[C_INT_LINE_SPI_HOST] (line 2) = OR of the 2 bits of i_int_spi_host",
+      "text": "o_int_fast[2] is the OR reduction of both bits of i_int_spi_host (line 2, mcause 18); each bit alone raises the line.",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 2",
+      "source_section": "§7.1, §7.2 line 2, §12 check 2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-004",
-      "text": "o_int_fast[C_INT_LINE_I2C] (line 3) = i_int_i2c, a wire",
+      "text": "o_int_fast[3] is a wire from i_int_i2c (line 3, mcause 19).",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 3",
+      "source_section": "§7.1, §7.2 line 3, §12 check 1",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-005",
-      "text": "o_int_fast[C_INT_LINE_UART_0] (line 4) = i_int_uart_0, a wire",
+      "text": "o_int_fast[4] is a wire from i_int_uart_0 (line 4, mcause 20).",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 4",
+      "source_section": "§7.1, §7.2 line 4, §12 check 1",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-006",
-      "text": "o_int_fast[C_INT_LINE_UART_1] (line 5) = i_int_uart_1, a wire",
+      "text": "o_int_fast[5] is a wire from i_int_uart_1 (line 5, mcause 21).",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 5",
+      "source_section": "§7.1, §7.2 line 5, §12 check 1",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-007",
-      "text": "o_int_fast[C_INT_LINE_TIMER_1] (line 6) = OR of the 2 bits of i_int_timer_1",
+      "text": "o_int_fast[6] is the OR reduction of both bits of i_int_timer_1 (line 6, mcause 22); each bit alone raises the line.",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 6",
+      "source_section": "§7.1, §7.2 line 6, §12 check 2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-008",
-      "text": "o_int_fast[C_INT_LINE_PWM] (line 7) = OR of the 4 bits of i_int_pwm",
+      "text": "o_int_fast[7] is the OR reduction of all 4 bits of i_int_pwm (line 7, mcause 23); each bit alone raises the line.",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 7",
+      "source_section": "§7.1, §7.2 line 7, §12 check 2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-009",
-      "text": "o_int_fast[C_INT_LINE_WDT_WAKEUP] (line 8) = i_int_wdt_wakeup, a wire",
+      "text": "o_int_fast[8] is a wire from i_int_wdt_wakeup (line 8, mcause 24).",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 8",
+      "source_section": "§7.1, §7.2 line 8, §12 check 1",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-010",
-      "text": "o_int_fast[C_INT_LINE_GPIO] (line 9) = OR of the 3 bits of i_int_gpio",
+      "text": "o_int_fast[9] is the OR reduction of all 3 bits of i_int_gpio (line 9, mcause 25); each bit alone raises the line.",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 9",
+      "source_section": "§7.1, §7.2 line 9, §12 check 2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-011",
-      "text": "o_int_fast[C_INT_LINE_TIMER_0] (line 10) = i_int_timer_0, a wire",
+      "text": "o_int_fast[10] is a wire from i_int_timer_0 (line 10, mcause 26).",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§7.1, §7.2 line 10",
+      "source_section": "§7.1, §7.2 line 10, §12 check 1",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-012",
-      "text": "o_int_nm = i_int_wdt_bark, a wire; it depends on no other input, and i_int_wdt_bark reaches no fast line",
+      "text": "o_int_nm is a wire from i_int_wdt_bark and depends on no other input; i_int_wdt_bark is never ORed and reaches no fast line.",
       "category": "functional",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§2, §7.3",
+      "source_section": "§2, §7.1, §7.3, §12 check 5",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-013",
-      "text": "One source group per line: every input reaches only its own line",
+      "text": "One source group per line: no input affects any output other than its own line, and no line carries sources from two groups. The block performs no prioritisation or masking; asserting one group never suppresses another.",
       "category": "functional",
-      "ambiguity_score": 0.1,
+      "ambiguity_score": 0.10,
       "needs_review": false,
-      "source_section": "§2, §12 checks 1-3",
+      "source_section": "§1, §2, §12 check 3",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "property"
     },
     {
       "req_id": "REQ-014",
-      "text": "Purely combinational: every output follows its inputs with no cycle of delay; no flip-flop, no latch, no state",
+      "text": "When inputs of several groups are asserted simultaneously, every affected line is asserted at the same time (cover the case of multiple and all groups active together).",
       "category": "functional",
-      "ambiguity_score": 0.05,
+      "ambiguity_score": 0.15,
       "needs_review": false,
-      "source_section": "§1, §2, §7.1",
+      "source_section": "§12 check 6",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
-      "sva_hint": "property"
+      "rtl_modules": ["m_qnsc_intmap"],
+      "sva_hint": "cover"
     },
     {
       "req_id": "REQ-015",
-      "text": "Line indices and the o_int_fast width come from qnsc_pkg (C_INT_LINE_*, C_INT_FAST_LINES_USED = 11), not typed numbers. The literal indices in §7.1 are illustrative; rtl_rule.md §2 and the repository hardcode rule take precedence",
-      "category": "constraint",
-      "ambiguity_score": 0.2,
+      "text": "Zero latency and no latching: every output follows its inputs combinationally with no cycle of delay. A held input keeps its line asserted for as long as it is held (including a clock-gated peripheral, 7.5); a pulse that ends deasserts the line in the same cycle.",
+      "category": "timing",
+      "ambiguity_score": 0.10,
       "needs_review": false,
-      "source_section": "§7.2 (generated from the contract); rtl_rule.md §2",
+      "source_section": "§1, §2, §7.1, §7.4, §7.5, §12 checks 7 and 9",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
-      "sva_hint": "static"
+      "rtl_modules": ["m_qnsc_intmap"],
+      "sva_hint": "property"
     },
     {
       "req_id": "REQ-016",
-      "text": "Ports exactly as §5: inputs i_int_dma[0], i_int_spi_device[7:0], i_int_spi_host[1:0], i_int_i2c, i_int_uart_0, i_int_uart_1, i_int_timer_1[1:0], i_int_pwm[3:0], i_int_wdt_wakeup, i_int_gpio[2:0], i_int_timer_0, i_int_wdt_bark (26 bits); outputs o_int_fast[10:0], o_int_nm (12 bits); no other port",
+      "text": "The module has exactly these ports and no others: inputs i_int_dma[0:0], i_int_spi_device[7:0] (bits in vendor port declaration order), i_int_spi_host[1:0] (bit 0 error, bit 1 event), i_int_i2c, i_int_uart_0, i_int_uart_1, i_int_timer_1[1:0] (bit 0 irq_lo_o, bit 1 irq_hi_o), i_int_pwm[3:0] (bit n = events_o[n]), i_int_wdt_wakeup, i_int_gpio[2:0] (bit n = GPIOn), i_int_timer_0, i_int_wdt_bark; outputs o_int_fast[10:0], o_int_nm. Total 26 input bits and 12 output bits. No i_clk_*, i_rst_n_* or bus port. Names follow QNSC_RTL_Design_Naming_Rule V1.0 section 3.6.",
       "category": "interface",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§5",
+      "source_section": "§5, §7.2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "static"
     },
     {
       "req_id": "REQ-017",
-      "text": "No clock and no reset port; no bus port; no register map",
+      "text": "Integration note for design/top (not implemented or tagged in m_qnsc_intmap, no SVA): o_int_fast drives Ibex irq_fast_i[10:0]; o_int_nm drives irq_nm_i; irq_fast_i[14:11] is tied 4'b0; irq_external_i, irq_timer_i and irq_software_i are tied 0.",
       "category": "interface",
-      "ambiguity_score": 0.05,
+      "ambiguity_score": 0.10,
       "needs_review": false,
-      "source_section": "§1, §5, §6",
+      "source_section": "§2, §7.2 lines 11-14, §10, §12 check 4",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
-      "sva_hint": "static"
+      "rtl_modules": ["design/top (outside this flow)"],
+      "sva_hint": "static",
+      "integration_note_only": true,
+      "review_log": [
+        "Ask 1/3 (score 0.35): top-level tie-offs are outside m_qnsc_intmap. User chose (b): keep as integration note only, no SVA, no RTL tag. Resolved at 0.10."
+      ]
     },
     {
       "req_id": "REQ-018",
-      "text": "Module m_qnsc_intmap, no parameters, instantiated once in design/top; instantiates nothing",
+      "text": "Combinational-only implementation: the synthesisable body consists solely of continuous assign statements; no always_ff, no always_latch, no flip-flop, no latch, no module instance. The only other construct allowed is the simulation-only always_comb assertion block of REQ-021 inside `ifndef SYNTHESIS.",
       "category": "constraint",
       "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§1, §4, §8",
+      "source_section": "§1, §2, §4, §7.1, §12 check 10",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "static"
     },
     {
       "req_id": "REQ-019",
-      "text": "Spare lines 11-14 and irq_external_i/irq_timer_i/irq_software_i are tied 0 in design/top, not in this block",
+      "text": "Module name m_qnsc_intmap in block directory design/intmap; the module has no parameters and is instantiated exactly once, in design/top.",
       "category": "constraint",
-      "ambiguity_score": 0.1,
+      "ambiguity_score": 0.05,
       "needs_review": false,
-      "source_section": "§3, §10",
+      "source_section": "§1, §8",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
+      "rtl_modules": ["m_qnsc_intmap"],
       "sva_hint": "static"
     },
     {
       "req_id": "REQ-020",
-      "text": "In simulation only (inside `ifndef SYNTHESIS`), a deferred assertion checks that every i_int_* is 0 or 1 and reports an error on X; nothing is added to the hardware. Closes MAS §11 open item 2",
-      "category": "functional",
-      "ambiguity_score": 0.1,
+      "text": "Line order is the priority order and is fixed per the table in 7.2: line n has mcause 16+n and vector mtvec + 4*mcause (NMI: mcause 31, mtvec + 0x7C). Line indices in RTL come from qnsc_pkg constants C_INT_LINE_* (rtl_rule.md section 2), not literal numbers; their values must equal the table in 7.2.",
+      "category": "constraint",
+      "ambiguity_score": 0.20,
+      "needs_review": false,
+      "source_section": "§2, §7.2, §12 check 8",
+      "parameters_affected": [],
+      "rtl_modules": ["m_qnsc_intmap"],
+      "sva_hint": "static",
+      "review_log": [
+        "Spec 7.1 snippet uses literal indices; rtl_rule.md section 2 forbids typed shared numbers. Repository rule wins; resolved at 0.20 without asking."
+      ]
+    },
+    {
+      "req_id": "REQ-021",
+      "text": "Simulation-only X check: every i_int_* input is known (!$isunknown) at all times, checked by a deferred immediate assertion (always_comb assert final) inside `ifndef SYNTHESIS in m_qnsc_intmap, one assertion per input so the failing source is named.",
+      "category": "interface",
+      "ambiguity_score": 0.10,
       "needs_review": false,
       "source_section": "§11 open item 2",
       "parameters_affected": [],
-      "rtl_modules": [
-        "m_qnsc_intmap"
-      ],
-      "sva_hint": "property"
+      "rtl_modules": ["m_qnsc_intmap"],
+      "sva_hint": "property",
+      "review_log": [
+        "Ask 1/3 (score 0.50): open item, whether the block asserts each input known. User chose (a): simulation-only assertion in RTL under `ifndef SYNTHESIS. Resolved at 0.10."
+      ]
     }
   ],
+
   "parameters": [],
+
   "style_constraints_source": "rtl_rule.md",
-  "ambiguity_flags": [],
-  "gate_1_approved": true
+
+  "ambiguity_flags": []
 }

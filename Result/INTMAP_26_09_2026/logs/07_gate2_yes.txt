@@ -1,0 +1,10 @@
+✓ Gate 2 đã ký. `schemas/final_config.json` đã được ghi.
+
+- **Parameter:** `parameters` rỗng, vì INTMAP không có parameter.
+- **Ràng buộc:** C1–C5 đều ghi `pass: true` kèm ghi chú N/A, vì các parameter của rv32im_core không có ở block này.
+- **Style:** 14 lint rule (STYLE-001..014), tất cả lấy từ `rtl_rule.md`. Không có rule bổ sung.
+- **Feature:** `feature_matrix` có F1–F5, tất cả bắt buộc và đang bật. Mã F1–F5 là do tôi đặt; spec §2 chỉ có gạch đầu dòng, không có ID.
+- **`approved_at` chỉ có ngày, không có giờ** (`2026-09-26`). Lệnh `date -Iseconds` bị từ chối quyền nên tôi không lấy được timestamp ISO đầy đủ.
+- **Chưa validate bằng máy.** File chưa được kiểm tra bằng `jsonschema`, vì lệnh validate đã bị từ chối quyền ở Phase 1.
+
+Phase 3 (RTL Generator + SVA Generator) có thể bắt đầu với `/rtl_generator`.
